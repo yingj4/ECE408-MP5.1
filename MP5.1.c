@@ -4,7 +4,7 @@
 
 #include <wb.h>
 
-#define BLOCK_SIZE 256 //@@ You can change this
+#define BLOCK_SIZE 64 //@@ You can change this
 
 #define wbCheck(stmt)                                                     \
   do {                                                                    \
@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
 
   wbTime_stop(GPU, "Copying input memory to the GPU.");
   //@@ Initialize the grid and block dimensions here
-  dim3 dimGrid(numOutputElements, 1, 1);
+  dim3 dimGrid(ceil(numInputElements / (2.0 * BLOCK_SIZE)), 1, 1);
   dim3 dimBlock((BLOCK_SIZE * 2), 1, 1);
 
   wbTime_start(Compute, "Performing CUDA computation");
