@@ -4,7 +4,7 @@
 
 #include <wb.h>
 
-#define BLOCK_SIZE 512 //@@ You can change this
+#define BLOCK_SIZE 256 //@@ You can change this
 
 #define wbCheck(stmt)                                                     \
   do {                                                                    \
@@ -22,7 +22,7 @@ __global__ void total(float *input, float *output, int len) {
   
   //@@ Traverse the reduction tree
   unsigned int t = threadIdx.x;
-  unsigned int start = 2 * blockIdx.x * blockDim.x;
+  unsigned int start = 2 * blockIdx.x * BLOCK_SIZE;
   if (t + start < len) {
     partialSum[t] = input[start + t];
   }
@@ -30,7 +30,7 @@ __global__ void total(float *input, float *output, int len) {
     partialSum[t] = 0;
   }
   
-  for (unsigned int stride = blockDim.x; stride >= 1; stride /= 2) {
+  for (unsigned int stride = BLOCK_SIZE; stride >= 1; stride /= 2) {
     __syncthreads();
     
     if (t < stride) {
@@ -90,11 +90,11 @@ int main(int argc, char **argv) {
   wbTime_stop(GPU, "Copying input memory to the GPU.");
   //@@ Initialize the grid and block dimensions here
   dim3 dimGrid(numOutputElements, 1, 1);
-  dim3 dimBlock(BLOCK_SIZE, 1, 1);
+  dim3 dimBlock((BLOCK_SIZE * 2), 1, 1);
 
   wbTime_start(Compute, "Performing CUDA computation");
   //@@ Launch the GPU Kernel here
-  total<<<dimGrid, dimBlock>>>(hostInput, hostOutput, numInputElements);
+  total<<<dimGrid, dimBlock>>>(deviceInput, deviceOutput, numInputElements);
 
   cudaDeviceSynchronize();
   wbTime_stop(Compute, "Performing CUDA computation");
