@@ -24,10 +24,16 @@ __global__ void total(float *input, float *output, int len) {
   unsigned int t = threadIdx.x;
   unsigned int start = 2 * blockIdx.x * BLOCK_SIZE;
   if (t + start < len) {
-    partialSum[t] = input[start + t];
+    partialSum[t] = input[t + start];
   }
   else {
     partialSum[t] = 0;
+  }
+  if (t + start + BLOCK_SIZE < len) {
+    partialSum[t + BLOCK_SIZE] = input[t + start + BLOCK_SIZE];
+  }
+  else {
+    partialSum[t + BLOCK_SIZE] = 0;
   }
   
   for (unsigned int stride = BLOCK_SIZE; stride >= 1; stride /= 2) {
@@ -89,8 +95,8 @@ int main(int argc, char **argv) {
 
   wbTime_stop(GPU, "Copying input memory to the GPU.");
   //@@ Initialize the grid and block dimensions here
-  dim3 dimGrid(ceil(numInputElements / (2.0 * BLOCK_SIZE)), 1, 1);
-  dim3 dimBlock((BLOCK_SIZE * 2), 1, 1);
+  dim3 dimGrid(ceil(numInputElements / (1.0 * BLOCK_SIZE)), 1, 1);
+  dim3 dimBlock((BLOCK_SIZE * 1), 1, 1);
 
   wbTime_start(Compute, "Performing CUDA computation");
   //@@ Launch the GPU Kernel here
